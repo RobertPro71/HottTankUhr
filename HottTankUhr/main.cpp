@@ -5,77 +5,52 @@
  * Author : Robert
  */ 
 
-//#define LED_PIN    (1 << PORTA5)
-//#define BUTTON_PIN (1 << PORTA1)
-
-#define F_CPU    3333333
 
 #include <avr/io.h>
-#include <util/delay.h>
-//#include <util/setbaud.h>
 #include "hottv4.h"
+#include "config.h"
+#include <util/delay.h>
 
 void SetupCpuSpeed ( void );
-void SetupRS232 ( void );
 
 HoTTv4 hott;
 
-uint8_t wuf;
-
 int main(void)
 {
- 
-  uint32_t UBR_VAL=((F_CPU+19200 * 8)/(19200 * 16)-1);
-  USART0.BAUD = (uint16_t)(UBR_VAL);
-	
-//	SetupCpuSpeed();
+
 	hott.setup();
 
 	//Setup dig IO
-	PORTB.DIRSET = PIN2_bm;
+	PORTB.DIRSET = PIN_LED_bm;
 
-	//UDR = 'x';               /* schreibt das Zeichen x auf die Schnittstelle */
-	
     while (1) 
     {
-		  PORTB.OUTSET = PIN2_bm; //Turns ON All LEDs	
+		  PORTB.OUTSET = PIN_LED_bm; //Turns ON All LEDs	
 		  _delay_ms(100); //1 second delay
-		  PORTB.OUTCLR = PIN2_bm; //Turns OFF All LEDs
+		  PORTB.OUTCLR = PIN_LED_bm; //Turns OFF All LEDs
 		  _delay_ms(100); //1 second delay
-//
-		//if(UCSRA & (1<<UDRE))         /* Senden, wenn UDR frei ist                    */
-		//{
-			//UDR = 'x';               /* schreibt das Zeichen x auf die Schnittstelle */
-		}
-
+	}
 }
 
 void SetupCpuSpeed ( void )
 {
-	//CLKPSR = (1<<CLKPS0)|(1<<CLKPS1);
-	//CCP    = 0xd8;
-	//CLKPSR = 0;   // presc 1
-	//CLKPSR = 0;   // presc 1
-	//CLKPSR = 0;   // presc 1
-	//CLKPSR = 0;   // presc 1
-
-
-CPU_CCP = 0xD8;
-CLKCTRL_MCLKCTRLA = CLKCTRL_CLKSEL_OSC20M_gc;
-CPU_CCP = 0xD8;
-CLKCTRL_MCLKCTRLB = 0x1;
-
-}
-
-void SetupRS232 ( void )
-{
-	////SETUP RS232
-	//UCSRB |= (1<<TXEN);                // UART TX einschalten
-	//UBRRH = UBRRH_VALUE;
-	//UBRRL = UBRRL_VALUE;
-	//#if USE_2X
-	//UCSRA |= (1 << U2X);
-	//#else
-	//UCSRA &= ~(1 << U2X);
-	//#endif
+	// 20 MHz
+	// Divider               19200
+	//  1  =  20 MHz         = 0.2 %
+	//  2  =  10 MHz         = 0.2 %
+	//  4  =   5 MHz         = 1,4 %
+	//  8  =   2,5 MHz       = 1.7 %
+	// 16  =   1,25 MHz      = 1.7 %
+	// 32  =   0,625 MHz     = 1.7 %
+	// 64  =   0,3125 MHz    = 1.7 %
+	//  6  =   3,3333 MHz    = 1.4 %   <-
+	// 10  =   2 MHz         = 0.2 %
+	// 24  =   0,8333 MHz    = 8.5 %
+	// 48  =   0,4166 MHz    = 9.6 %
+		
+	CPU_CCP = CCP_IOREG_gc;
+	CLKCTRL_MCLKCTRLA = CLKCTRL_CLKSEL_OSC20M_gc;
+	CPU_CCP = CCP_IOREG_gc;
+	CLKCTRL_MCLKCTRLB = CLKCTRL_PEN_bm | CLKCTRL_PDIV_6X_gc;
+	
 }

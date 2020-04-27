@@ -185,6 +185,9 @@
     <Compile Include="hottv4.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="config.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="main.cpp">
       <SubType>compile</SubType>
     </Compile>

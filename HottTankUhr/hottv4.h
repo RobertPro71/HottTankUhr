@@ -180,6 +180,7 @@ class HoTTv4 {
 public:
     HoTTv4();
 		void setup();
+		void UartInit();
 		
     //void gamSetCellVoltage(uint8_t no, uint8_t volt);
     //void gamSetBattery1(uint16_t volt);
@@ -202,12 +203,12 @@ public:
     //bool telemetrySend();
 
 private:
-    //void enableRx();
-    //void enableTx();
+    void UartEnableRx();
+    void UartEnableTx();
     //void write(uint8_t c);
     //void sendData(uint8_t *data, uint8_t size);
-//
-    //void txtClear();
+
+    void txtClear();
     //void txtPrint(uint8_t row, uint8_t col, uint8_t len,
       //const char* str, bool pgm, bool invert);
     //bool txtSend();

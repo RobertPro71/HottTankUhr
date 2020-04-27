@@ -6,6 +6,8 @@
 // Author: Heinz Bruederlin
 //----------------------------------------------------------------------
 #include "hottv4.h"
+#include "config.h"
+#include <string.h>
 
 //static void itoa8(char* str, uint8_t i, uint8_t digits) {
     //int j;
@@ -48,30 +50,54 @@ HoTTv4::HoTTv4(){
 
 void HoTTv4::setup(){
     gam.startByte      = HOTTV4_START_BIN;
-    //gam.sensorID       = HOTTV4_GENERAL_AIR_SENSOR_ID;
-    //gam.sensorTextID   = HOTTV4_GENERAL_AIR_SENSOR_TEXT_ID;
-    //gam.endByte        = HOTTV4_STOP;
-    //gam.lowestCellVoltage = 0;
-    //gam.lowestCellNumber  = 0;
-//
-    //txt.startByte      = HOTTV4_START_TXT;
-    //txt.sensorTextID   = HOTTV4_ELECTRICAL_AIR_SENSOR_TEXT_ID;
-    //txt.endByte        = HOTTV4_STOP;
-//
-    //txtClear();
+    gam.sensorID       = HOTTV4_GENERAL_AIR_SENSOR_ID;
+    gam.sensorTextID   = HOTTV4_GENERAL_AIR_SENSOR_TEXT_ID;
+    gam.endByte        = HOTTV4_STOP;
+    gam.lowestCellVoltage = 0;
+    gam.lowestCellNumber  = 0;
 
-    //ss.begin(19200);
+    txt.startByte      = HOTTV4_START_TXT;
+    txt.sensorTextID   = HOTTV4_ELECTRICAL_AIR_SENSOR_TEXT_ID;
+    txt.endByte        = HOTTV4_STOP;
+
+    txtClear();
+
+	UartInit();	
     //enableRx();	
 }
 
-//void HoTTv4::enableRx() {
-    //pinMode(pin, INPUT_PULLUP);
-//}
-//
-//void HoTTv4::enableTx() {
-    //pinMode(pin, OUTPUT);
-//}
-//
+void HoTTv4::UartInit(){
+	PORTB.DIRSET = PIN_TX_bm;
+	PORTB.OUTSET = PIN_TX_bm;
+
+	uint32_t UBR_VAL = ((F_CPU * 64)/(HOTTBAUD * 16));
+	USART0.BAUD = (uint16_t)(UBR_VAL);	
+	
+	USART0.CTRLC =
+		USART_CMODE_ASYNCHRONOUS_gc | // Mode: Asynchronous[default]
+		USART_PMODE_DISABLED_gc | // Parity: None[default]
+		USART_SBMODE_1BIT_gc | // StopBit: 1bit[default]
+		USART_CHSIZE_8BIT_gc; // CharacterSize: 8bit[default]
+
+	//USART0.CTRLA =
+		//USART_RXCIE_bm | // Enable RX interrupt
+		//!USART_TXCIE_bm; // Disable TX interrupt
+
+	USART0.CTRLB =
+		USART_RXEN_bm | // Start Receiver
+		USART_TXEN_bm | // Start Transmitter
+		USART_RXMODE_NORMAL_gc; // Receiver mode is Normal USART & 1x-speed
+
+}
+
+void HoTTv4::UartEnableRx() {
+	USART0.CTRLB = USART_RXEN_bm; 
+}
+
+void HoTTv4::UartEnableTx() {
+	USART0.CTRLB = USART_TXEN_bm;
+}
+
 //void HoTTv4::write(uint8_t c) {
   //ss.write(c);
 //}
@@ -342,11 +368,11 @@ void HoTTv4::setup(){
 //}
 //
 //
-////----------------------- Text -----------------
-//void HoTTv4::txtClear() {
-    //memset(txt.text, ' ', sizeof(txt.text));
-//}
-//
+//----------------------- Text -----------------
+void HoTTv4::txtClear() {
+    memset(txt.text, ' ', sizeof(txt.text));
+}
+
 //void HoTTv4::txtPrint(uint8_t row, uint8_t col, uint8_t len,
 		      //const char* str, bool pgm, bool invert) {
     //uint8_t* dst = txt.text[row]+col;
