@@ -59,6 +59,13 @@ void SetupCpuSpeed ( void )
 	CLKPSR = 0;   // presc 1
 	CLKPSR = 0;   // presc 1
 	CLKPSR = 0;   // presc 1
+
+
+CPU_CCP = 0xD8;
+CLKCTRL_MCLKCTRLA = CLKCTRL_CLKSEL_OSC20M_gc;
+CPU_CCP = 0xD8;
+CLKCTRL_MCLKCTRLB = 0x1;
+
 }
 
 void SetupRS232 ( void )
