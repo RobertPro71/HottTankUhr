@@ -204,7 +204,9 @@ public:
 
 private:
     void UartEnableRx();
+    void UartDisableRx();
     void UartEnableTx();
+    void UartDisableTx();
     //void write(uint8_t c);
     //void sendData(uint8_t *data, uint8_t size);
 

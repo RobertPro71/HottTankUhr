@@ -8,6 +8,7 @@
 #include "hottv4.h"
 #include "config.h"
 #include <string.h>
+#include <avr/interrupt.h>
 
 //static void itoa8(char* str, uint8_t i, uint8_t digits) {
     //int j;
@@ -62,7 +63,7 @@ void HoTTv4::setup(){
 
     txtClear();
 
-	UartInit();	
+    UartInit();	
     //enableRx();	
 }
 
@@ -70,7 +71,7 @@ void HoTTv4::UartInit(){
 	PORTB.DIRSET = PIN_TX_bm;
 	PORTB.OUTSET = PIN_TX_bm;
 
-	uint32_t UBR_VAL = ((F_CPU * 64)/(HOTTBAUD * 16));
+	uint32_t UBR_VAL =  (((8 * F_CPU) / HOTTBAUD) + 1) / 2;
 	USART0.BAUD = (uint16_t)(UBR_VAL);	
 	
 	USART0.CTRLC =
@@ -79,24 +80,46 @@ void HoTTv4::UartInit(){
 		USART_SBMODE_1BIT_gc | // StopBit: 1bit[default]
 		USART_CHSIZE_8BIT_gc; // CharacterSize: 8bit[default]
 
-	//USART0.CTRLA =
-		//USART_RXCIE_bm | // Enable RX interrupt
-		//!USART_TXCIE_bm; // Disable TX interrupt
+	USART0.CTRLA =
+		!USART_RXCIE_bm | // Enable RX interrupt
+		!USART_TXCIE_bm; // Disable TX interrupt
 
 	USART0.CTRLB =
-		USART_RXEN_bm | // Start Receiver
+		!USART_RXEN_bm | // Start Receiver
 		USART_TXEN_bm | // Start Transmitter
 		USART_RXMODE_NORMAL_gc; // Receiver mode is Normal USART & 1x-speed
+		
+	UartEnableTx();
+	sei();
 
 }
 
 void HoTTv4::UartEnableRx() {
-	USART0.CTRLB = USART_RXEN_bm; 
+	USART0.CTRLB |= USART_RXEN_bm; 
+	USART0.CTRLA |= USART_RXCIE_bm;
+}
+
+void HoTTv4::UartDisableRx() {
+	USART0.CTRLB &= ~USART_RXEN_bm; 
+	USART0.CTRLA &= ~USART_RXCIE_bm;
 }
 
 void HoTTv4::UartEnableTx() {
-	USART0.CTRLB = USART_TXEN_bm;
+	USART0.CTRLB |= USART_TXEN_bm;  // Enable TX send
+	USART0.CTRLA |= USART_TXCIE_bm; // Enable TX interrupt
 }
+
+void HoTTv4::UartDisableTx() {
+	USART0.CTRLB &= ~USART_TXEN_bm;  // Enable TX send
+	USART0.CTRLA &= ~USART_TXCIE_bm; // Enable TX interrupt
+}
+
+//Send byte complete
+ISR(USART0_TXC_vect)
+{
+	USART0.TXDATAL = 0xbb; // Transmit a byte
+}
+
 
 //void HoTTv4::write(uint8_t c) {
   //ss.write(c);

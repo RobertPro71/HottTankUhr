@@ -20,15 +20,9 @@ int main(void)
 
 	hott.setup();
 
-	//Setup dig IO
-	PORTB.DIRSET = PIN_LED_bm;
+	USART0.TXDATAL = 0xaa; // Transmit a byte
 
-    while (1) 
-    {
-		  PORTB.OUTSET = PIN_LED_bm; //Turns ON All LEDs	
-		  _delay_ms(100); //1 second delay
-		  PORTB.OUTCLR = PIN_LED_bm; //Turns OFF All LEDs
-		  _delay_ms(100); //1 second delay
+  while(true){
 	}
 }
 
