@@ -72,6 +72,7 @@ void HoTTv4::UartInit(){
 	PORTB.OUTSET = PIN_TX_bm;
 
 	uint32_t UBR_VAL =  (((8 * F_CPU) / HOTTBAUD) + 1) / 2;
+
 	USART0.BAUD = (uint16_t)(UBR_VAL);	
 	
 	USART0.CTRLC =
