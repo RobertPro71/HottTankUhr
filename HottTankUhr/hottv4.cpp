@@ -50,21 +50,22 @@ HoTTv4::HoTTv4(){
 }
 
 void HoTTv4::setup(){
-    gam.startByte      = HOTTV4_START_BIN;
-    gam.sensorID       = HOTTV4_GENERAL_AIR_SENSOR_ID;
-    gam.sensorTextID   = HOTTV4_GENERAL_AIR_SENSOR_TEXT_ID;
-    gam.endByte        = HOTTV4_STOP;
-    gam.lowestCellVoltage = 0;
-    gam.lowestCellNumber  = 0;
+    gam.value.startByte      = HOTTV4_START_BIN;
+    gam.value.sensorID       = HOTTV4_GENERAL_AIR_SENSOR_ID;
+    gam.value.sensorTextID   = HOTTV4_GENERAL_AIR_SENSOR_TEXT_ID;
+    gam.value.endByte        = HOTTV4_STOP;
+    gam.value.lowestCellVoltage = 0;
+    gam.value.lowestCellNumber  = 0;
 
-    txt.startByte      = HOTTV4_START_TXT;
-    txt.sensorTextID   = HOTTV4_ELECTRICAL_AIR_SENSOR_TEXT_ID;
-    txt.endByte        = HOTTV4_STOP;
+    txt.value.startByte      = HOTTV4_START_TXT;
+    txt.value.sensorTextID   = HOTTV4_ELECTRICAL_AIR_SENSOR_TEXT_ID;
+    txt.value.endByte        = HOTTV4_STOP;
 
     txtClear();
-
-    UartInit();	
-    //enableRx();	
+    UartInit();
+		status = WaitFirstByte;
+    UartEnableRx();
+		
 }
 
 void HoTTv4::UartInit(){
@@ -90,9 +91,7 @@ void HoTTv4::UartInit(){
 		USART_TXEN_bm | // Start Transmitter
 		USART_RXMODE_NORMAL_gc; // Receiver mode is Normal USART & 1x-speed
 		
-	UartEnableTx();
 	sei();
-
 }
 
 void HoTTv4::UartEnableRx() {
@@ -115,10 +114,26 @@ void HoTTv4::UartDisableTx() {
 	USART0.CTRLA &= ~USART_TXCIE_bm; // Enable TX interrupt
 }
 
+
 //Send byte complete
 ISR(USART0_TXC_vect)
 {
 	USART0.TXDATAL = 0xbb; // Transmit a byte
+}
+
+//Received byte complete
+ISR(USART0_RXC_vect)
+{
+	//uint8_t RecByte = USART0.RXDATAL;
+	//
+	//switch(GetStatus()){
+		//case WaitFirstByte:
+			//if(RecByte == HOTTV4_START_BYTE) SetStatus(WaitSecondByte);
+			//break;
+		//case WaitSecondByte:
+			//if((RecByte && 0xF0) == 0xD0)
+		//}
+		
 }
 
 
@@ -394,7 +409,7 @@ ISR(USART0_TXC_vect)
 //
 //----------------------- Text -----------------
 void HoTTv4::txtClear() {
-    memset(txt.text, ' ', sizeof(txt.text));
+    memset(txt.value.text, ' ', sizeof(txt.value.text));
 }
 
 //void HoTTv4::txtPrint(uint8_t row, uint8_t col, uint8_t len,
