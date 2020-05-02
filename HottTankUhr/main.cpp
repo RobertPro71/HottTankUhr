@@ -8,17 +8,20 @@
 
 #include <avr/io.h>
 #include "hottv4.h"
+#include "Timer.h"
 #include "config.h"
 #include <util/delay.h>
 
 void SetupCpuSpeed ( void );
 
 HoTTv4 hott;
+Timer TickTimer;
 
 int main(void)
 {
 
 	hott.setup();
+	TickTimer.start();
 
 	USART0.TXDATAL = 0xaa; // Transmit a byte
 
