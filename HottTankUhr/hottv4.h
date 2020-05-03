@@ -198,8 +198,8 @@ public:
     HoTTv4();
 		void setup();
 		void UartInit();
-		HottStatus_e GetStatus(){return status};
-		void SetStatus(HottStatus_e newStatus){status = newStatus};
+		HottStatus_e GetStatus(){return Protstatus;};
+		void SetStatus(HottStatus_e newStatus){Protstatus = newStatus;};
 		
     //void gamSetCellVoltage(uint8_t no, uint8_t volt);
     //void gamSetBattery1(uint16_t volt);
@@ -247,7 +247,7 @@ private:
     //uint32_t   gam_m1s;
     //uint16_t   gam_m3;
     //uint32_t   gam_m3s;
-		HottStatus_e status;
+	HottStatus_e Protstatus;
     HottBin_u  gam;
     HottTxt_u  txt;
 };

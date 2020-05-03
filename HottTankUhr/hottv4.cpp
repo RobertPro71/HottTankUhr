@@ -63,7 +63,7 @@ void HoTTv4::setup(){
 
     txtClear();
     UartInit();
-		status = WaitFirstByte;
+		Protstatus = WaitFirstByte;
     UartEnableRx();
 		
 }
