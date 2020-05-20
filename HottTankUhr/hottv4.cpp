@@ -50,12 +50,12 @@ HoTTv4::HoTTv4(){
 }
 
 void HoTTv4::setup(){
-    gam.value.startByte      = HOTTV4_START_BIN;
-    gam.value.sensorID       = HOTTV4_GENERAL_AIR_SENSOR_ID;
-    gam.value.sensorTextID   = HOTTV4_GENERAL_AIR_SENSOR_TEXT_ID;
-    gam.value.endByte        = HOTTV4_STOP;
-    gam.value.lowestCellVoltage = 0;
-    gam.value.lowestCellNumber  = 0;
+    bin.value.startByte      = HOTTV4_START_BIN;
+    bin.value.sensorID       = HOTTV4_GENERAL_AIR_SENSOR_ID;
+    bin.value.sensorTextID   = HOTTV4_GENERAL_AIR_SENSOR_TEXT_ID;
+    bin.value.endByte        = HOTTV4_STOP;
+    bin.value.lowestCellVoltage = 0;
+    bin.value.lowestCellNumber  = 0;
 
     txt.value.startByte      = HOTTV4_START_TXT;
     txt.value.sensorTextID   = HOTTV4_ELECTRICAL_AIR_SENSOR_TEXT_ID;
@@ -65,7 +65,6 @@ void HoTTv4::setup(){
     UartInit();
 		Protstatus = WaitFirstByte;
     UartEnableRx();
-		
 }
 
 void HoTTv4::UartInit(){
@@ -94,6 +93,19 @@ void HoTTv4::UartInit(){
 	sei();
 }
 
+void HoTTv4::TimerInit()
+{
+
+}
+
+void HoTTv4::TimerStart(uint16_t mstime)
+{
+  TCB0.CCMP    = mstime;				//Time this counter run
+  TCB0.CNT     = 0;							//start from zero
+  TCB0.CTRLA   = TCB_ENABLE_bm;	//start timer
+  TCB0.INTCTRL = TCB_CAPT_bm;   //enable interrupt
+}
+
 void HoTTv4::UartEnableRx() {
 	USART0.CTRLB |= USART_RXEN_bm; 
 	USART0.CTRLA |= USART_RXCIE_bm;
@@ -115,27 +127,113 @@ void HoTTv4::UartDisableTx() {
 }
 
 
-//Send byte complete
-ISR(USART0_TXC_vect)
+void HoTTv4::StartIdleLine(HottTransmittMode_e Mode)
 {
-	USART0.TXDATAL = 0xbb; // Transmit a byte
+	if(Mode == TModeBin) LastByteIndex = sizeof(HottBin_u);
+	if(Mode == TModeTxt) LastByteIndex = sizeof(HottTxt_u);
+	SendByteIndex = 0;
+	UartRcvCounter = 0;
+	Protstatus = WaitIdleLine;
+	TimerStart(ms_5_c);
 }
 
-//Received byte complete
-ISR(USART0_RXC_vect)
-{
-	//uint8_t RecByte = USART0.RXDATAL;
-	//
-	//switch(GetStatus()){
-		//case WaitFirstByte:
-			//if(RecByte == HOTTV4_START_BYTE) SetStatus(WaitSecondByte);
-			//break;
-		//case WaitSecondByte:
-			//if((RecByte && 0xF0) == 0xD0)
-		//}
-		
+//	USART0.TXDATAL = 0xbb; // Transmit a byte
+
+void HoTTv4::OnRcvInterrupt(){
+	//Receive a byte
+	uint8_t recByte = USART0.RXDATAL;
+	
+	switch (Protstatus)
+	{
+		case WaitFirstByte:
+			if(recByte == HOTTV4_REQUEST_BIN) Protstatus = WaitSecondByteBin;
+			if(recByte == HOTTV4_REQUEST_TXT) Protstatus = WaitSecondByteTxt;
+			break;
+		case WaitSecondByteBin:
+			if(recByte == HOTTV4_GENERAL_AIR_SENSOR_ID){
+				TransmittMode = TModeBin;
+				StartIdleLine( TModeBin );
+			}
+			else{
+				Protstatus = WaitFirstByte;
+			}
+			break;
+		case WaitSecondByteTxt:
+			if((recByte & HOTTV4_MASK_TEXT_ID) == HOTTV4_GENERAL_AIR_SENSOR_TEXT_ID){
+				TransmittMode = TModeTxt;
+				ButtonRequest = (recByte & HOTTV4_TEXT_BUTTON_MASK);
+				StartIdleLine( TModeTxt );
+			}
+			else{
+				Protstatus = WaitFirstByte;
+			}
+			break;
+		case WaitIdleLine:
+			UartRcvCounter++;
+			break;
+		//default:
+			//Protstatus = ???
+		default: break;
+	}
 }
 
+void HoTTv4::OnSndInterrupt()
+{
+	USART0.STATUS |= USART_TXCIF_bm;
+	
+	if(Protstatus != LastByte)
+		TimerStart	(ms_1_c);
+	else
+		Protstatus = WaitFirstByte;
+}
+
+void HoTTv4::OnTimerInterrupt()
+{
+  //Timer stoppen
+  TCB0.CTRLA = 0;
+  TCB0.INTFLAGS = TCB_CAPT_bm;
+	
+	switch(Protstatus)
+	{
+		case WaitIdleLine:
+			if(UartRcvCounter != 0){
+				Protstatus = WaitFirstByte;
+				break;
+			}
+			else{
+				crc = 0;
+				UartDisableRx();
+				UartEnableTx();
+				if (TransmittMode == TModeBin){
+					Protstatus = SendBin;
+				}
+				else{
+					Protstatus = SendTxt;
+				}
+			}
+		case SendBin:
+			if(SendByteIndex < LastByteIndex){
+				crc += bin.byte[SendByteIndex];
+				USART0.TXDATAL = bin.byte[SendByteIndex++]; 
+			}
+			else{
+				USART0.TXDATAL = uint8_t(crc & 0x00FF);
+				Protstatus = LastByte;
+			}
+			break;
+		case SendTxt:
+			if(SendByteIndex < LastByteIndex){
+				crc += txt.byte[SendByteIndex];
+				USART0.TXDATAL = bin.byte[SendByteIndex++];
+			}
+			else{
+				USART0.TXDATAL = uint8_t(crc & 0x00FF);
+				Protstatus = LastByte;
+			}
+			break;
+		default: break;
+	}
+}
 
 //void HoTTv4::write(uint8_t c) {
   //ss.write(c);

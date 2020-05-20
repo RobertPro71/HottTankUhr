@@ -8,24 +8,23 @@
 
 #include <avr/io.h>
 #include "hottv4.h"
-#include "Timer.h"
 #include "config.h"
+#include <avr/interrupt.h>
 #include <util/delay.h>
 
 void SetupCpuSpeed ( void );
 
 HoTTv4 hott;
-Timer TickTimer;
+static HoTTv4* GetsInterrupt;
 
 
 int main(void)
 {
+	GetsInterrupt = &hott;
+
 
 	hott.setup();
-	TickTimer.start();
-
-	USART0.TXDATAL = 0xaa; // Transmit a byte
-
+	 
   while(true){
 	}
 }
@@ -51,4 +50,22 @@ void SetupCpuSpeed ( void )
 	CPU_CCP = CCP_IOREG_gc;
 	CLKCTRL_MCLKCTRLB = CLKCTRL_PEN_bm | CLKCTRL_PDIV_6X_gc;
 	
+}
+
+//Received byte complete
+ISR(USART0_RXC_vect)
+{
+	if( GetsInterrupt ) GetsInterrupt->OnRcvInterrupt();
+}
+
+//Send byte complete
+ISR(USART0_TXC_vect)
+{
+	if( GetsInterrupt ) GetsInterrupt->OnSndInterrupt();
+}
+
+//Timer Interrupt
+ISR(TCB0_INT_vect)
+{
+	if( GetsInterrupt ) GetsInterrupt->OnTimerInterrupt();
 }

@@ -9,23 +9,31 @@
 #define hottv4_h
 
 #include <avr/io.h>
+#include "config.h"
+
+const uint16_t ms_1_c = (F_CPU / 1000);
+const uint16_t ms_5_c = (F_CPU /  200);
 
 #define ALT_OFFSET        500
 #define EAM_TEMP_OFFSET    20
 #define GAM_TEMP_OFFSET    40
 
-#define HOTTV4_START_BYTE 0x7F
+#define HOTTV4_REQUEST_BIN 0x80
+#define HOTTV4_REQUEST_TXT 0x7F
+
+
 #define HOTTV4_START_BIN  0x7C
 #define HOTTV4_START_TXT  0x7B
 #define HOTTV4_STOP       0x7D
 
 /** ###### HoTT buttons specifications ###### */
-#define HOTTV4_TEXT_MODE_LEFT   0x07
-#define HOTTV4_TEXT_MODE_DOWN   0x0D
-#define HOTTV4_TEXT_MODE_UP     0x0B
-#define HOTTV4_TEXT_MODE_RIGHT  0x0E
-#define HOTTV4_TEXT_MODE_SET    0x09
-#define HOTTV4_TEXT_MODE_NIL    0x0F
+#define HOTTV4_TEXT_BUTTON_LEFT   0x07
+#define HOTTV4_TEXT_BUTTON_DOWN   0x0D
+#define HOTTV4_TEXT_BUTTON_UP     0x0B
+#define HOTTV4_TEXT_BUTTON_RIGHT  0x0E
+#define HOTTV4_TEXT_BUTTON_SET    0x09
+#define HOTTV4_TEXT_BUTTON_NIL    0x0F
+#define HOTTV4_TEXT_BUTTON_MASK   0x0F
 
 /** ###### HoTT module specifications ###### */
 
@@ -38,6 +46,7 @@
 #define HOTTV4_GPS_SENSOR_TEXT_ID            0xA0
 #define HOTTV4_GENERAL_AIR_SENSOR_TEXT_ID    0xD0
 #define HOTTV4_ELECTRICAL_AIR_SENSOR_TEXT_ID 0xE0
+#define HOTTV4_MASK_TEXT_ID                  0xF0
 
 typedef enum {
   HoTTv4NotificationErrorCalibration     = 0x01,
@@ -187,9 +196,18 @@ union HottTxt_u{
 
 enum HottStatus_e{
 	WaitFirstByte = 0,
-	WaitSecondByte,
-	WaitIdleLine
+	WaitSecondByteTxt,
+	WaitSecondByteBin,
+	WaitIdleLine,
+	SendTxt,
+	SendBin,
+	LastByte
 };
+
+enum HottTransmittMode_e{
+	TModeBin = 0,
+	TModeTxt
+	};
 
 //class Config;
 
@@ -198,8 +216,13 @@ public:
     HoTTv4();
 		void setup();
 		void UartInit();
-		HottStatus_e GetStatus(){return Protstatus;};
-		void SetStatus(HottStatus_e newStatus){Protstatus = newStatus;};
+		void TimerInit();
+		void TimerStart(uint16_t mstime);
+		
+		void OnRcvInterrupt();
+		void OnSndInterrupt();
+ 	  void OnTimerInterrupt();
+	
 		
     //void gamSetCellVoltage(uint8_t no, uint8_t volt);
     //void gamSetBattery1(uint16_t volt);
@@ -226,6 +249,7 @@ private:
     void UartDisableRx();
     void UartEnableTx();
     void UartDisableTx();
+		void StartIdleLine( HottTransmittMode_e Mode);
     //void write(uint8_t c);
     //void sendData(uint8_t *data, uint8_t size);
 
@@ -247,8 +271,14 @@ private:
     //uint32_t   gam_m1s;
     //uint16_t   gam_m3;
     //uint32_t   gam_m3s;
-	HottStatus_e Protstatus;
-    HottBin_u  gam;
+		uint16_t crc;
+		uint8_t SendByteIndex;
+		uint8_t LastByteIndex;
+		uint8_t UartRcvCounter;
+		uint8_t ButtonRequest;
+    HottStatus_e Protstatus;
+    HottTransmittMode_e TransmittMode;
+    HottBin_u  bin;
     HottTxt_u  txt;
 };
 
