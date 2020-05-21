@@ -179,6 +179,12 @@
     </ToolchainSettings>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="ad.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ad.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="hottv4.cpp">
       <SubType>compile</SubType>
     </Compile>

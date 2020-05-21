@@ -86,17 +86,14 @@ void HoTTv4::UartInit(){
 		!USART_TXCIE_bm; // Disable TX interrupt
 
 	USART0.CTRLB =
-		!USART_RXEN_bm | // Start Receiver
-		USART_TXEN_bm | // Start Transmitter
+		USART_RXEN_bm | // Start Receiver
 		USART_RXMODE_NORMAL_gc; // Receiver mode is Normal USART & 1x-speed
 		
 	sei();
 }
 
 void HoTTv4::TimerInit()
-{
-
-}
+{}
 
 void HoTTv4::TimerStart(uint16_t mstime)
 {
@@ -136,8 +133,6 @@ void HoTTv4::StartIdleLine(HottTransmittMode_e Mode)
 	Protstatus = WaitIdleLine;
 	TimerStart(ms_5_c);
 }
-
-//	USART0.TXDATAL = 0xbb; // Transmit a byte
 
 void HoTTv4::OnRcvInterrupt(){
 	//Receive a byte
@@ -187,7 +182,7 @@ void HoTTv4::OnSndInterrupt()
 		Protstatus = WaitFirstByte;
 }
 
-void HoTTv4::OnTimerInterrupt()
+void HoTTv4::OnUartTimerInterrupt()
 {
   //Timer stoppen
   TCB0.CTRLA = 0;
@@ -213,8 +208,7 @@ void HoTTv4::OnTimerInterrupt()
 			}
 		case SendBin:
 			if(SendByteIndex < LastByteIndex){
-				crc += bin.byte[SendByteIndex];
-				USART0.TXDATAL = bin.byte[SendByteIndex++]; 
+				sendByte(bin.byte[SendByteIndex++]); 
 			}
 			else{
 				USART0.TXDATAL = uint8_t(crc & 0x00FF);
@@ -223,8 +217,7 @@ void HoTTv4::OnTimerInterrupt()
 			break;
 		case SendTxt:
 			if(SendByteIndex < LastByteIndex){
-				crc += txt.byte[SendByteIndex];
-				USART0.TXDATAL = bin.byte[SendByteIndex++];
+				sendByte(bin.byte[SendByteIndex++]);
 			}
 			else{
 				USART0.TXDATAL = uint8_t(crc & 0x00FF);
@@ -235,50 +228,11 @@ void HoTTv4::OnTimerInterrupt()
 	}
 }
 
-//void HoTTv4::write(uint8_t c) {
-  //ss.write(c);
-//}
-//
-//void HoTTv4::sendData(uint8_t *data, uint8_t size) {
-    //ss.flush();
-//
-    //delay(5); // Protocol specific waiting time to avoid collisions
-//
-    //if (ss.available() > 0) return;
-//
-    //enableTx();
-//
-    //uint16_t crc = 0;
-    //for (uint8_t i = 0; i < size; i++) {
-	//uint8_t d = *data++;
-	//crc += d;
-	//write(d);
-//
-	//// Protocol specific delay between each transmitted byte
-	//delayMicroseconds(1000);
-    //}
-//
-    //write(crc & 0xFF); // Write package checksum
-    //// Protocol specific delay between each transmitted byte
-    //delayMicroseconds(1000);
-    //ss.flush();
-//
-    //enableRx();
-//}
-//
-//
-//static const char uicMenu0[]  PROGMEM = " UIC CONFIG";
-//static const char uicMenu1[]  PROGMEM = " MIN VOLT ";
-//static const char uicMenu2[]  PROGMEM = " MAX CURR ";
-//static const char uicMenu3[]  PROGMEM = " MIN CAP  ";
-//static const char uicMenu4[]  PROGMEM = " CAL VOLT ";
-//static const char uicMenu5[]  PROGMEM = " DBG      ";
-//static const char menuOn[]    PROGMEM = "on";
-//static const char menuOff[]   PROGMEM = "off";
-//static const char menuStore[] PROGMEM = "sto";
-//static const char menuArrow[] PROGMEM = ">";
-//#define menuBool(a) ((a)?menuOn:menuOff)
-//
+void HoTTv4::sendByte(uint8_t data){
+	crc += data;
+	USART0.TXDATAL = data;
+}
+
 //void HoTTv4::uicText(uint8_t c, uint8_t sensorTextID) {
     //char buf[7];
     //uint8_t x;
@@ -395,64 +349,9 @@ void HoTTv4::OnTimerInterrupt()
 //
 //
 //////----------------------- General Module (GAM) -----------------
-//void HoTTv4::gamSetCellVoltage(uint8_t no, uint8_t volt) {
-    //uint8_t* cell;
-    //if (no<1 || no>6) return;
-    //cell = &gam.voltageCell1+no-1;
-    //*cell = volt;
-    //if (gam.lowestCellVoltage==0 || volt < gam.lowestCellVoltage) {
-        //gam.lowestCellVoltage = volt;
-        //gam.lowestCellNumber  = no;
-    //}
-//}
-//
 //void HoTTv4::gamSetBattery1(uint16_t volt) {
     //gam.battery1 = volt;
 //}
-//
-//void HoTTv4::gamSetBattery2(uint16_t volt) {
-    //gam.battery2 = volt;
-//}
-//
-//void HoTTv4::gamSetTemperature1(uint8_t temp) {
-    //gam.temperature1 = temp + GAM_TEMP_OFFSET;
-//}
-//
-//void HoTTv4::gamSetTemperature2(uint8_t temp) {
-    //gam.temperature2 = temp + GAM_TEMP_OFFSET;
-//}
-//
-//void HoTTv4::gamSetFuelPercent(uint8_t percent) {
-    //gam.fuelPercent = percent;
-//}
-//
-//void HoTTv4::gamSetFuelCapacity(int16_t capacity) {
-    //gam.fuelCapacity = capacity;
-//}
-//
-//void HoTTv4::gamSetRPM(uint16_t rpm) {
-    //gam.rpm = rpm;
-//}
-//
-//void HoTTv4::gamSetRPM2(uint16_t rpm) {
-    //gam.rpm2 = rpm;
-//}
-//
-//void HoTTv4::gamSetAltitude(uint16_t altitude) {
-    //uint32_t now = millis();
-    //gam.altitude = altitude - ALT_OFFSET;
-    //if (now > gam_m1s) {
-	//gam.m1s = altitude - gam_m1;
-	//gam_m1  = altitude;
-	//gam_m1s += 1000;
-    //}
-    //if (now > gam_m3s) {
-	//gam.m3s = altitude - gam_m3;
-	//gam_m3  = altitude;
-	//gam_m3s += 3000;
-    //}
-//}
-//
 //void HoTTv4::gamSetCurrent(uint16_t current) {
     //gam.current = current;
     //if (cfg->alarmCurrent && gam.current > cfg->maxCurrent) {
@@ -471,6 +370,7 @@ void HoTTv4::OnTimerInterrupt()
     //}
 //}
 //
+
 //void HoTTv4::gamSetCapacity(uint16_t capacity) {
     //gam.capacity = capacity;
     //if (cfg->alarmCapacity && gam.capacity < cfg->minCapacity) {
@@ -480,34 +380,23 @@ void HoTTv4::OnTimerInterrupt()
     //}
 //}
 //
-//void HoTTv4::gamUpdateAlarmTone() {
-    //if (gam.inverseStatus2)
-	//gam.alarmTone = HoTTv4NotificationUndervoltage;
-    //else
-	//gam.alarmTone = 0;
-//}
-//
-//void HoTTv4::gamSetSpeed(uint16_t speed) {
-    //gam.speed = speed;
-//}
-//
-//void HoTTv4::gamSetPressure(uint8_t pres) {
-    //gam.pressure = pres;
-//}
-//
-//void HoTTv4::gamText(uint8_t c) {
-    //uicText(c, HOTTV4_GENERAL_AIR_SENSOR_TEXT_ID);
-//}
-//
-//bool HoTTv4::gamSend() {
-    //sendData(&gam.startByte, sizeof(gam));
-    //return true;
-//}
-//
-//
+
 //----------------------- Text -----------------
 void HoTTv4::txtClear() {
     memset(txt.value.text, ' ', sizeof(txt.value.text));
+}
+
+void HoTTv4::txtDefault()
+{
+	txt.value.text[2][3] = 'H';
+	txt.value.text[2][4] = 'a';
+	txt.value.text[2][5] = 'l';
+	txt.value.text[2][6] = 'l';
+	txt.value.text[2][7] = 'o';
+	txt.value.text[2][8] = ' ';
+	txt.value.text[2][9] = '0';
+	txt.value.text[2][10] = '.';
+	txt.value.text[2][10] = '1';
 }
 
 //void HoTTv4::txtPrint(uint8_t row, uint8_t col, uint8_t len,

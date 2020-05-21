@@ -221,7 +221,7 @@ public:
 		
 		void OnRcvInterrupt();
 		void OnSndInterrupt();
- 	  void OnTimerInterrupt();
+ 	    void OnUartTimerInterrupt();
 	
 		
     //void gamSetCellVoltage(uint8_t no, uint8_t volt);
@@ -241,19 +241,18 @@ public:
     //void gamSetPressure(uint8_t pres);
     //void gamText(uint8_t c);
     //void gamUpdateAlarmTone();
-//
-    //bool telemetrySend();
 
 private:
     void UartEnableRx();
     void UartDisableRx();
     void UartEnableTx();
     void UartDisableTx();
-		void StartIdleLine( HottTransmittMode_e Mode);
-    //void write(uint8_t c);
-    //void sendData(uint8_t *data, uint8_t size);
+	void StartIdleLine( HottTransmittMode_e Mode);
+    void sendByte(uint8_t data);
 
     void txtClear();
+	void txtDefault();
+	
     //void txtPrint(uint8_t row, uint8_t col, uint8_t len,
       //const char* str, bool pgm, bool invert);
     //bool txtSend();
@@ -271,11 +270,11 @@ private:
     //uint32_t   gam_m1s;
     //uint16_t   gam_m3;
     //uint32_t   gam_m3s;
-		uint16_t crc;
-		uint8_t SendByteIndex;
-		uint8_t LastByteIndex;
-		uint8_t UartRcvCounter;
-		uint8_t ButtonRequest;
+	uint16_t crc;
+	uint8_t SendByteIndex;
+	uint8_t LastByteIndex;
+	uint8_t UartRcvCounter;
+	uint8_t ButtonRequest;
     HottStatus_e Protstatus;
     HottTransmittMode_e TransmittMode;
     HottBin_u  bin;

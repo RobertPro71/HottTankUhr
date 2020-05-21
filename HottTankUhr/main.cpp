@@ -8,6 +8,7 @@
 
 #include <avr/io.h>
 #include "hottv4.h"
+#include "ad.h"
 #include "config.h"
 #include <avr/interrupt.h>
 #include <util/delay.h>
@@ -15,17 +16,20 @@
 void SetupCpuSpeed ( void );
 
 HoTTv4 hott;
-static HoTTv4* GetsInterrupt;
+static HoTTv4* GetHottInterrupt;
+ad AnaIn;
+static ad* GetAdInterrupt;
 
 
 int main(void)
 {
-	GetsInterrupt = &hott;
-
+	GetHottInterrupt = &hott;
+	GetAdInterrupt   = &AnaIn;
 
 	hott.setup();
+	AnaIn.init();
 	 
-  while(true){
+	while(true){
 	}
 }
 
@@ -55,17 +59,23 @@ void SetupCpuSpeed ( void )
 //Received byte complete
 ISR(USART0_RXC_vect)
 {
-	if( GetsInterrupt ) GetsInterrupt->OnRcvInterrupt();
+	if( GetHottInterrupt ) GetHottInterrupt->OnRcvInterrupt();
 }
 
 //Send byte complete
 ISR(USART0_TXC_vect)
 {
-	if( GetsInterrupt ) GetsInterrupt->OnSndInterrupt();
+	if( GetHottInterrupt ) GetHottInterrupt->OnSndInterrupt();
 }
 
 //Timer Interrupt
 ISR(TCB0_INT_vect)
 {
-	if( GetsInterrupt ) GetsInterrupt->OnTimerInterrupt();
+	if( GetHottInterrupt ) GetHottInterrupt->OnUartTimerInterrupt();
+}
+
+//AD Interrupt
+ISR(ADC0_RESRDY_vect)
+{
+	if( GetAdInterrupt ) GetAdInterrupt->OnAdInterrupt();
 }
