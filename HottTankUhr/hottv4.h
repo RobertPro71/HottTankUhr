@@ -221,7 +221,7 @@ public:
 		
 		void OnRcvInterrupt();
 		void OnSndInterrupt();
- 	    void OnUartTimerInterrupt();
+ 	  void OnUartTimerInterrupt();
 	
 		
     //void gamSetCellVoltage(uint8_t no, uint8_t volt);
@@ -243,16 +243,13 @@ public:
     //void gamUpdateAlarmTone();
 
 private:
-    void UartEnableRx();
-    void UartDisableRx();
-    void UartEnableTx();
-    void UartDisableTx();
-	void StartIdleLine( HottTransmittMode_e Mode);
+		void StartIdleLine( HottTransmittMode_e Mode);
     void sendByte(uint8_t data);
 
     void txtClear();
-	void txtDefault();
+		void txtDefault();
 	
+		void DebugBlink(uint8_t count);
     //void txtPrint(uint8_t row, uint8_t col, uint8_t len,
       //const char* str, bool pgm, bool invert);
     //bool txtSend();
@@ -270,13 +267,13 @@ private:
     //uint32_t   gam_m1s;
     //uint16_t   gam_m3;
     //uint32_t   gam_m3s;
-	uint16_t crc;
-	uint8_t SendByteIndex;
-	uint8_t LastByteIndex;
-	uint8_t UartRcvCounter;
-	uint8_t ButtonRequest;
-    HottStatus_e Protstatus;
-    HottTransmittMode_e TransmittMode;
+		volatile uint16_t crc;
+		volatile uint8_t SendByteIndex;
+		volatile uint8_t LastByteIndex;
+		volatile uint8_t UartRcvCounter;
+		volatile uint8_t ButtonRequest;
+    volatile HottStatus_e Protstatus;
+    volatile HottTransmittMode_e TransmittMode;
     HottBin_u  bin;
     HottTxt_u  txt;
 };

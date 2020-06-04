@@ -10,6 +10,7 @@
 #include "hottv4.h"
 #include "ad.h"
 #include "config.h"
+#include "ahcounter_cl.h"
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
@@ -19,17 +20,31 @@ HoTTv4 hott;
 static HoTTv4* GetHottInterrupt;
 ad AnaIn;
 static ad* GetAdInterrupt;
-
+ahcounter_cl mAh;
 
 int main(void)
 {
 	GetHottInterrupt = &hott;
 	GetAdInterrupt   = &AnaIn;
 
+	//Config PIN
+	PORTB.DIRSET = PIN_DEBUG_bm;
+	PORTB.OUTCLR = PIN_DEBUG_bm;
+
 	hott.setup();
 	AnaIn.init();
+	mAh.init();
 	 
 	while(true){
+		if(AnaIn.ChannelList[VOLTAGE].newval == true){
+			AnaIn.ChannelList[VOLTAGE].newval = false;
+			AnaIn.ChannelList[VOLTAGE].real = (AnaIn.ChannelList[VOLTAGE].raw - AnaIn.ChannelList[VOLTAGE].offset) * AnaIn.ChannelList[VOLTAGE].scale;
+		}
+		if(AnaIn.ChannelList[CURRENT].newval == true){
+			AnaIn.ChannelList[CURRENT].newval = false;
+			AnaIn.ChannelList[CURRENT].real = (AnaIn.ChannelList[CURRENT].raw - AnaIn.ChannelList[CURRENT].offset) * AnaIn.ChannelList[CURRENT].scale;
+			mAh.count(AnaIn.ChannelList[CURRENT].real);
+		}
 	}
 }
 
@@ -78,4 +93,9 @@ ISR(TCB0_INT_vect)
 ISR(ADC0_RESRDY_vect)
 {
 	if( GetAdInterrupt ) GetAdInterrupt->OnAdInterrupt();
+}
+
+ISR(TCB1_INT_vect)
+{
+	if( GetAdInterrupt ) GetAdInterrupt->OnAdTimerInterrupt();
 }

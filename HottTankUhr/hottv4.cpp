@@ -64,13 +64,12 @@ void HoTTv4::setup(){
     txtClear();
     UartInit();
 		Protstatus = WaitFirstByte;
-    UartEnableRx();
 }
 
 void HoTTv4::UartInit(){
 	PORTB.DIRSET = PIN_TX_bm;
 	PORTB.OUTSET = PIN_TX_bm;
-
+	
 	uint32_t UBR_VAL =  (((8 * F_CPU) / HOTTBAUD) + 1) / 2;
 
 	USART0.BAUD = (uint16_t)(UBR_VAL);	
@@ -82,11 +81,12 @@ void HoTTv4::UartInit(){
 		USART_CHSIZE_8BIT_gc; // CharacterSize: 8bit[default]
 
 	USART0.CTRLA =
-		!USART_RXCIE_bm | // Enable RX interrupt
-		!USART_TXCIE_bm; // Disable TX interrupt
+		USART_RXCIE_bm | // Enable RX interrupt
+		USART_TXCIE_bm;  // Enable TX interrupt
 
 	USART0.CTRLB =
 		USART_RXEN_bm | // Start Receiver
+		USART_TXEN_bm | // Start Transmiter
 		USART_RXMODE_NORMAL_gc; // Receiver mode is Normal USART & 1x-speed
 		
 	sei();
@@ -103,27 +103,6 @@ void HoTTv4::TimerStart(uint16_t mstime)
   TCB0.INTCTRL = TCB_CAPT_bm;   //enable interrupt
 }
 
-void HoTTv4::UartEnableRx() {
-	USART0.CTRLB |= USART_RXEN_bm; 
-	USART0.CTRLA |= USART_RXCIE_bm;
-}
-
-void HoTTv4::UartDisableRx() {
-	USART0.CTRLB &= ~USART_RXEN_bm; 
-	USART0.CTRLA &= ~USART_RXCIE_bm;
-}
-
-void HoTTv4::UartEnableTx() {
-	USART0.CTRLB |= USART_TXEN_bm;  // Enable TX send
-	USART0.CTRLA |= USART_TXCIE_bm; // Enable TX interrupt
-}
-
-void HoTTv4::UartDisableTx() {
-	USART0.CTRLB &= ~USART_TXEN_bm;  // Enable TX send
-	USART0.CTRLA &= ~USART_TXCIE_bm; // Enable TX interrupt
-}
-
-
 void HoTTv4::StartIdleLine(HottTransmittMode_e Mode)
 {
 	if(Mode == TModeBin) LastByteIndex = sizeof(HottBin_u);
@@ -132,6 +111,7 @@ void HoTTv4::StartIdleLine(HottTransmittMode_e Mode)
 	UartRcvCounter = 0;
 	Protstatus = WaitIdleLine;
 	TimerStart(ms_5_c);
+	DebugBlink(1);
 }
 
 void HoTTv4::OnRcvInterrupt(){
@@ -176,10 +156,12 @@ void HoTTv4::OnSndInterrupt()
 {
 	USART0.STATUS |= USART_TXCIF_bm;
 	
-	if(Protstatus != LastByte)
+	if(Protstatus != LastByte){
 		TimerStart	(ms_1_c);
-	else
+	}
+	else{
 		Protstatus = WaitFirstByte;
+	}
 }
 
 void HoTTv4::OnUartTimerInterrupt()
@@ -187,18 +169,20 @@ void HoTTv4::OnUartTimerInterrupt()
   //Timer stoppen
   TCB0.CTRLA = 0;
   TCB0.INTFLAGS = TCB_CAPT_bm;
+
+	DebugBlink(2);
 	
 	switch(Protstatus)
 	{
 		case WaitIdleLine:
 			if(UartRcvCounter != 0){
+	DebugBlink(3);
 				Protstatus = WaitFirstByte;
 				break;
 			}
 			else{
+	DebugBlink(4);
 				crc = 0;
-				UartDisableRx();
-				UartEnableTx();
 				if (TransmittMode == TModeBin){
 					Protstatus = SendBin;
 				}
@@ -207,8 +191,10 @@ void HoTTv4::OnUartTimerInterrupt()
 				}
 			}
 		case SendBin:
+	DebugBlink(5);
 			if(SendByteIndex < LastByteIndex){
 				sendByte(bin.byte[SendByteIndex++]); 
+	DebugBlink(6);
 			}
 			else{
 				USART0.TXDATAL = uint8_t(crc & 0x00FF);
@@ -397,6 +383,15 @@ void HoTTv4::txtDefault()
 	txt.value.text[2][9] = '0';
 	txt.value.text[2][10] = '.';
 	txt.value.text[2][10] = '1';
+}
+
+void HoTTv4::DebugBlink(uint8_t count)
+{
+	for (;count;count--)
+	{
+		PORTB.OUTSET = PIN_DEBUG_bm;
+		PORTB.OUTCLR = PIN_DEBUG_bm;
+	}
 }
 
 //void HoTTv4::txtPrint(uint8_t row, uint8_t col, uint8_t len,

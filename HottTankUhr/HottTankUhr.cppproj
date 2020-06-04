@@ -185,6 +185,12 @@
     <Compile Include="ad.h">
       <SubType>compile</SubType>
     </Compile>
+    <Compile Include="ahcounter_cl.cpp">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="ahcounter_cl.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="hottv4.cpp">
       <SubType>compile</SubType>
     </Compile>
