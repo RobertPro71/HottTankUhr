@@ -129,51 +129,6 @@ struct HoTTv4GeneralAirModule_t {
   //uint8_t chksum;          /* Byte 45: created on the fly */
 };
 
-	struct HoTTv4ElectricAirModule_t {
-		uint8_t startByte;      /* Byte 1: */
-		uint8_t sensorID;       /* Byte 2: */
-		uint8_t alarmTone;      /* Byte 3: Alarm */
-		uint8_t sensorTextID;   /* Byte 4: */
-		uint8_t alarmInverse1;  /* Byte 5: */
-		uint8_t alarmInverse2;  /* Byte 6: */
-
-		uint8_t cell1L;         /* Byte 7:  Low Voltage Cell 1 in 2mV steps */
-		uint8_t cell2L;         /* Byte 8:  Low Voltage Cell 2 in 2mV steps */
-		uint8_t cell3L;         /* Byte 9:  Low Voltage Cell 3 in 2mV steps */
-		uint8_t cell4L;         /* Byte 10: Low Voltage Cell 4 in 2mV steps */
-		uint8_t cell5L;         /* Byte 11: Low Voltage Cell 5 in 2mV steps */
-		uint8_t cell6L;         /* Byte 12: Low Voltage Cell 6 in 2mV steps */
-		uint8_t cell7L;         /* Byte 13: Low Voltage Cell 7 in 2mV steps */
-		uint8_t cell1H;         /* Byte 14: High Voltage Cell 1 in 2mV steps */
-		uint8_t cell2H;         /* Byte 15: High Voltage Cell 1 in 2mV steps */
-		uint8_t cell3H;         /* Byte 16: High Voltage Cell 1 in 2mV steps */
-		uint8_t cell4H;         /* Byte 17: High Voltage Cell 1 in 2mV steps */
-		uint8_t cell5H;         /* Byte 18: High Voltage Cell 1 in 2mV steps */
-		uint8_t cell6H;         /* Byte 19: High Voltage Cell 1 in 2mV steps */
-		uint8_t cell7H;         /* Byte 20: High Voltage Cell 1 in 2mV steps */
-
-		uint16_t battery1;      /* Byte 21+22: Bat 1 LSB/MSB 100mv steps */
-		uint16_t battery2;      /* Byte 23+24: Bat 2 LSB/MSB 100mv steps */
-
-		uint8_t temperature1;   /* Byte 25: Temp 1. 20 == 0C */
-		uint8_t temperature2;   /* Byte 26: Temp 2. 20 == 0C */
-
-		uint16_t altitude;      /* Byte 27+28: LSB/MSB Height. 500 == 0m */
-		uint16_t current;       /* Byte 29+30: 1 = 0.1A */
-		uint16_t driveVoltage;  /* Byte 31+32: 0.002V */
-		uint16_t capacity;      /* Byte 33+34: mAh */
-		uint16_t m2s;           /* Byte 35+35: LSB/MSB */
-		uint8_t  m3s;           /* Byte 37: */
-
-		uint16_t rpm;           /* Byte 38+39: LSB/MSB RPM. 300 == 3000rpm */
-		uint8_t minutes;        /* Byte 40: */
-		uint8_t seconds;        /* Byte 41: */
-		uint8_t speed;          /* Byte 42: */
-
-		uint8_t version;        /* Byte 43: */
-		uint8_t endByte;        /* Byte 44: 0x7D */
-		//uint8_t chksum;       /* Byte 45: created on the fly */
-};
 
 union HottBin_u{
 	HoTTv4GeneralAirModule_t value;
