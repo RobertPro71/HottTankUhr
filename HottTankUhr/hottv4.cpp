@@ -81,19 +81,16 @@ void HoTTv4::UartInit(){
 		USART_CHSIZE_8BIT_gc; // CharacterSize: 8bit[default]
 
 	USART0.CTRLA =
+		USART_LBME_bm |  // Internal Loop-Back to connect RX and TX Pin
 		USART_RXCIE_bm | // Enable RX interrupt
 		USART_TXCIE_bm;  // Enable TX interrupt
 
 	USART0.CTRLB =
+		USART_ODME_bm | // Open Drain needed by One Wire
 		USART_RXEN_bm | // Start Receiver
-		USART_TXEN_bm | // Start Transmiter
-		USART_RXMODE_NORMAL_gc; // Receiver mode is Normal USART & 1x-speed
-		
-	sei();
+		USART_TXEN_bm | // Start transmitter
+		USART_RXMODE_NORMAL_gc; // Receiver mode is Normal USART & 1x-speed	
 }
-
-void HoTTv4::TimerInit()
-{}
 
 void HoTTv4::TimerStart(uint16_t mstime)
 {
@@ -118,37 +115,35 @@ void HoTTv4::OnRcvInterrupt(){
 	//Receive a byte
 	uint8_t recByte = USART0.RXDATAL;
 	
-	switch (Protstatus)
-	{
-		case WaitFirstByte:
-			if(recByte == HOTTV4_REQUEST_BIN) Protstatus = WaitSecondByteBin;
-			if(recByte == HOTTV4_REQUEST_TXT) Protstatus = WaitSecondByteTxt;
-			break;
-		case WaitSecondByteBin:
-			if(recByte == HOTTV4_GENERAL_AIR_SENSOR_ID){
-				TransmittMode = TModeBin;
-				StartIdleLine( TModeBin );
-			}
-			else{
-				Protstatus = WaitFirstByte;
-			}
-			break;
-		case WaitSecondByteTxt:
-			if((recByte & HOTTV4_MASK_TEXT_ID) == HOTTV4_GENERAL_AIR_SENSOR_TEXT_ID){
-				TransmittMode = TModeTxt;
-				ButtonRequest = (recByte & HOTTV4_TEXT_BUTTON_MASK);
-				StartIdleLine( TModeTxt );
-			}
-			else{
-				Protstatus = WaitFirstByte;
-			}
-			break;
-		case WaitIdleLine:
-			UartRcvCounter++;
-			break;
-		//default:
-			//Protstatus = ???
-		default: break;
+	if(Protstatus == WaitSecondByteTxt){
+		if((recByte & HOTTV4_MASK_TEXT_ID) == HOTTV4_GENERAL_AIR_SENSOR_TEXT_ID){
+			TransmittMode = TModeTxt;
+			ButtonRequest = (recByte & HOTTV4_TEXT_BUTTON_MASK);
+			StartIdleLine( TModeTxt );
+			return;
+		}
+		else{
+			Protstatus = WaitFirstByte;
+		}
+	}
+	else if(Protstatus == WaitSecondByteBin){
+		if(recByte == HOTTV4_GENERAL_AIR_SENSOR_ID){
+			TransmittMode = TModeBin;
+			StartIdleLine( TModeBin );
+			return;
+		}
+		else{
+			Protstatus = WaitFirstByte;
+		}
+	}
+	
+	if(Protstatus == WaitFirstByte){
+		if(recByte == HOTTV4_REQUEST_BIN) Protstatus = WaitSecondByteBin;
+		if(recByte == HOTTV4_REQUEST_TXT) Protstatus = WaitSecondByteTxt;
+	}
+	
+	if(Protstatus == WaitIdleLine){
+		UartRcvCounter++;
 	}
 }
 

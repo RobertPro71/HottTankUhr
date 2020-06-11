@@ -34,6 +34,7 @@ int main(void)
 	hott.setup();
 	AnaIn.init();
 	mAh.init();
+	sei(); // Start Interrupt
 	 
 	while(true){
 		if(AnaIn.ChannelList[VOLTAGE].newval == true){
